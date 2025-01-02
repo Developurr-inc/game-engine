@@ -33,11 +33,11 @@ typedef struct ShaderInfo {
 } ShaderInfo;
 
 static void         createInstance(State *state);
-static const char **getRequiredLayers(const State *state, uint32_t *requiredLayerCount);
+// static const char **getRequiredLayers(const State *state, uint32_t *requiredLayerCount);
 static void         checkRequiredLayers(const char **requiredLayers, uint32_t requiredLayerCount);
 static const char **getRequiredExtensions(const State *state, uint32_t *requiredExtensionCount);
 static void         checkRequiredExtensions(const char **requiredExtensions, uint32_t requiredExtensionCount);
-static const char **addLayer(const char **layers, uint32_t *layerCount, const char *layer);
+// static const char **addLayer(const char **layers, uint32_t *layerCount, const char *layer);
 static const char **addExtension(const char **extensions, uint32_t *extensionCount, const char *extension);
 static const char **addStringToArray(const char **strings, uint32_t *stringCount, const char *string);
 
@@ -46,7 +46,7 @@ static void createSurface(State *state);
 static void               pickPhysicalDevice(State *state);
 static bool               isDeviceSuitable(State *state, VkPhysicalDevice device);
 static QueueFamilyIndices findQueueFamilies(VkSurfaceKHR surface, VkPhysicalDevice device);
-static const char **      getRequiredDeviceExtensions(State *state, VkPhysicalDevice device, uint32_t *requiredDeviceExtensionCount);
+// static const char **      getRequiredDeviceExtensions(State *state, VkPhysicalDevice device, uint32_t *requiredDeviceExtensionCount);
 static bool               checkRequiredDeviceExtensions(VkPhysicalDevice device, const char **requiredDeviceExtensions, uint32_t requiredDeviceExtensionCount);
 
 static void createLogicalDevice(State *state);
@@ -60,9 +60,21 @@ static uint32_t                clamp(uint32_t value, uint32_t min, uint32_t max)
 
 static void createImageViews(State *state);
 
+static void createRenderPass(State *state);
+
 static void createGraphicsPipeline(State *state);
 static ShaderInfo readFile(const char *filename);
 VkShaderModule createShaderModule(State *state, ShaderInfo shader);
+
+static void createFramebuffers(State *state);
+
+static void createCommandPool(State *state);
+
+static void createCommandBuffer(State *state);
+static void recordCommandBuffer(State *state, VkCommandBuffer commandBuffer, uint32_t imageIndex);
+
+
+static void createSyncObjects(State *state);
 
 /*
  * Public Functions
@@ -80,13 +92,85 @@ void initVulkan(State *state) {
     createLogicalDevice(state);
     createSwapChain(state);
     createImageViews(state);
+    createRenderPass(state);
     createGraphicsPipeline(state);
+    createFramebuffers(state);
+    createCommandPool(state);
+    createCommandBuffer(state);
+    createSyncObjects(state);
+}
+
+void drawFrame(State *state) {
+    // Waiting for the previous frame
+    PANIC(vkWaitForFences(state->device, 1, &state->inFlightFence, VK_TRUE, UINT64_MAX), "Failed to wait for fence");
+    PANIC(vkResetFences(state->device, 1, &state->inFlightFence), "Failed to reset fence");
+
+    // Acquiring an image from the swap chain
+    uint32_t imageIndex;
+    PANIC(vkAcquireNextImageKHR(state->device, state->swapchain, UINT64_MAX, state->imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex), "Failed to acquire next image");
+
+    // Recording the command buffer
+    vkResetCommandBuffer(state->commandBuffer, 0);
+    recordCommandBuffer(state, state->commandBuffer, imageIndex);
+
+    // Submitting the command buffer
+    VkSemaphore waitSemaphores[] = {
+        state->imageAvailableSemaphore
+    };
+
+    VkSemaphore signalSemaphores[] = {
+        state->renderFinishedSemaphore
+    };
+
+    VkPipelineStageFlags waitStages[] = {
+        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+    };
+
+    VkSubmitInfo submitInfo = {
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = waitSemaphores,
+        .pWaitDstStageMask = waitStages,
+        .commandBufferCount = 1,
+        .pCommandBuffers = &state->commandBuffer,
+        .signalSemaphoreCount = 1,
+        .pSignalSemaphores = signalSemaphores,
+    };
+
+    PANIC(vkQueueSubmit(state->presentQueue, 1, &submitInfo, state->inFlightFence), "Failed to submit draw command buffer");
+
+    // Presentation
+    VkSwapchainKHR swapChains[] = {
+        state->swapchain
+    };
+
+    VkPresentInfoKHR presentInfo = {
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = signalSemaphores,
+        .swapchainCount = 1,
+        .pSwapchains = swapChains,
+        .pImageIndices = &imageIndex,
+        .pResults = nullptr, // Optional
+    };
+
+    PANIC(vkQueuePresentKHR(state->presentQueue, &presentInfo), "Failed to present swap chain image");
 }
 
 void destroyVulkan(const State *state) {
-#ifndef NDEBUG
-    DestroyDebugMessenger(state);
-#endif // NDEBUG
+    vkDestroySemaphore(state->device, state->imageAvailableSemaphore, state->allocator);
+    vkDestroySemaphore(state->device, state->renderFinishedSemaphore, state->allocator);
+    vkDestroyFence(state->device, state->inFlightFence, state->allocator);
+    vkDestroyCommandPool(state->device, state->commandPool, state->allocator);
+
+    for (int i = 0; i < state->swapchain_image_count; i++) {
+        vkDestroyFramebuffer(state->device, state->swapChainFramebuffers[i], state->allocator);
+    }
+    free(state->swapChainFramebuffers);
+
+    vkDestroyPipeline(state->device, state->graphicsPipeline, state->allocator);
+    vkDestroyPipelineLayout(state->device, state->pipelineLayout, state->allocator);
+    vkDestroyRenderPass(state->device, state->renderPass, state->allocator);
 
     for (int i = 0; i < state->swapchain_image_count; i++) {
         vkDestroyImageView(state->device, state->swapchain_image_views[i], state->allocator);
@@ -97,6 +181,11 @@ void destroyVulkan(const State *state) {
     vkDestroySwapchainKHR(state->device, state->swapchain, state->allocator);
     vkDestroyDevice(state->device, state->allocator);
     vkDestroySurfaceKHR(state->instance, state->surface, state->allocator);
+
+#ifndef NDEBUG
+    DestroyDebugMessenger(state);
+#endif // NDEBUG
+
     vkDestroyInstance(state->instance, state->allocator);
 }
 
@@ -385,22 +474,22 @@ static QueueFamilyIndices findQueueFamilies(VkSurfaceKHR surface, VkPhysicalDevi
     return indices;
 }
 
-static const char **getRequiredDeviceExtensions(State *state, VkPhysicalDevice device, uint32_t *requiredDeviceExtensionCount) {
-    uint32_t deviceExtensionCount = 0;
-    const char **deviceExtensions = nullptr;
-
-    for (int i = 0; i < state->device_extension_count; i++) {
-        deviceExtensions = addExtension(deviceExtensions, &deviceExtensionCount, state->device_extensions[i]);
-    }
-
-    if (checkRequiredDeviceExtensions(device, deviceExtensions, deviceExtensionCount)) {
-        return nullptr;
-    }
-
-    *requiredDeviceExtensionCount = deviceExtensionCount;
-
-    return deviceExtensions;
-}
+// static const char **getRequiredDeviceExtensions(State *state, VkPhysicalDevice device, uint32_t *requiredDeviceExtensionCount) {
+//     uint32_t deviceExtensionCount = 0;
+//     const char **deviceExtensions = nullptr;
+//
+//     for (int i = 0; i < state->device_extension_count; i++) {
+//         deviceExtensions = addExtension(deviceExtensions, &deviceExtensionCount, state->device_extensions[i]);
+//     }
+//
+//     if (checkRequiredDeviceExtensions(device, deviceExtensions, deviceExtensionCount)) {
+//         return nullptr;
+//     }
+//
+//     *requiredDeviceExtensionCount = deviceExtensionCount;
+//
+//     return deviceExtensions;
+// }
 
 static bool checkRequiredDeviceExtensions(VkPhysicalDevice device, const char **requiredDeviceExtensions, uint32_t requiredDeviceExtensionCount) {
     uint32_t availableDeviceExtensionCount;
@@ -662,10 +751,57 @@ void createImageViews(State *state) {
     }
 }
 
+static void createRenderPass(State *state) {
+    VkAttachmentDescription colorAttachment = {
+        .format = state->swapchain_image_format,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+    };
+
+    VkAttachmentReference colorAttachmentRef = {
+        .attachment = 0,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+
+    VkSubpassDescription subpass = {
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachmentRef,
+    };
+
+    VkSubpassDependency dependency = {
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = 0,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    };
+
+    VkRenderPassCreateInfo renderPassInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .attachmentCount = 1,
+        .pAttachments = &colorAttachment,
+        .subpassCount = 1,
+        .pSubpasses = &subpass,
+        .dependencyCount = 1,
+        .pDependencies = &dependency,
+    };
+
+    PANIC(vkCreateRenderPass(state->device, &renderPassInfo, state->allocator, &state->renderPass), "Failed to create render pass");
+}
+
+
 static void createGraphicsPipeline(State *state) {
     ShaderInfo vertShaderCode = readFile("../src/shaders/vert.spv");
     ShaderInfo fragShaderCode = readFile("../src/shaders/frag.spv");
 
+    // Shader Modules
     VkShaderModule vertShaderModule = createShaderModule(state, vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(state, fragShaderCode);
 
@@ -691,8 +827,8 @@ static void createGraphicsPipeline(State *state) {
         fragShaderStageInfo
     };
 
-
-    std::vector<VkDynamicState> dynamicStates = {
+    // Dynamic state
+    VkDynamicState dynamicStates[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR
     };
@@ -703,10 +839,121 @@ static void createGraphicsPipeline(State *state) {
         .pDynamicStates = dynamicStates
     };
 
-    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-    dynamicState.pDynamicStates = dynamicStates.data();
+    // Vertex Input
+    VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount = 0,
+        .pVertexBindingDescriptions = nullptr, // Optional
+        .vertexAttributeDescriptionCount = 0,
+        .pVertexAttributeDescriptions = nullptr, // Optional
 
+    };
+
+    // Input Assembly
+    VkPipelineInputAssemblyStateCreateInfo inputAssembly = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .primitiveRestartEnable = VK_FALSE,
+    };
+
+    // Viewports and Scissors
+    VkPipelineViewportStateCreateInfo viewportState = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount = 1,
+        .scissorCount = 1,
+    };
+
+    // Rasterizer
+    VkPipelineRasterizationStateCreateInfo rasterizer = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .depthClampEnable = VK_FALSE,
+        .rasterizerDiscardEnable = VK_FALSE,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .lineWidth = 1.0f,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_CLOCKWISE,
+        .depthBiasEnable = VK_FALSE,
+        .depthBiasConstantFactor = 0.0f, // Optional
+        .depthBiasClamp = 0.0f, // Optional
+        .depthBiasSlopeFactor = 0.0f, // Optional
+    };
+
+    // Multisampling
+    VkPipelineMultisampleStateCreateInfo multisampling = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .sampleShadingEnable = VK_FALSE,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .minSampleShading = 1.0f, // Optional
+        .pSampleMask = nullptr, // Optional
+        .alphaToCoverageEnable = VK_FALSE, // Optional
+        .alphaToOneEnable = VK_FALSE, // Optional
+    };
+
+    // Depth and stencil testing
+
+    // Color blending
+    VkPipelineColorBlendAttachmentState colorBlendAttachment = {
+        .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+        .blendEnable = VK_FALSE,
+        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE, // Optional
+        .dstColorBlendFactor = VK_BLEND_FACTOR_ZERO, // Optional
+        .colorBlendOp = VK_BLEND_OP_ADD, // Optional
+        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE, // Optional
+        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO, // Optional
+        .alphaBlendOp = VK_BLEND_OP_ADD, // Optional
+    };
+
+    // VkPipelineColorBlendAttachmentState colorBlendAttachment = {
+    //     .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+    //     .blendEnable = VK_TRUE,
+    //     .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+    //     .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+    //     .colorBlendOp = VK_BLEND_OP_ADD, // Optional
+    //     .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE, // Optional
+    //     .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO, // Optional
+    //     .alphaBlendOp = VK_BLEND_OP_ADD, // Optional
+    // };
+
+    VkPipelineColorBlendStateCreateInfo colorBlending = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_COPY, // Optional
+        .attachmentCount = 1,
+        .pAttachments = &colorBlendAttachment,
+        .blendConstants = {0.0f, 0.0f, 0.0f, 0.0f}, // Optional
+    };
+
+    // Pipeline Layout
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = 0, // Optional
+        .pSetLayouts = nullptr, // Optional
+        .pushConstantRangeCount = 0, // Optional
+        .pPushConstantRanges = nullptr, // Optional
+    };
+
+    PANIC(vkCreatePipelineLayout(state->device, &pipelineLayoutInfo, state->allocator, &state->pipelineLayout), "Failed to create pipeline layout");
+
+    VkGraphicsPipelineCreateInfo pipelineInfo = {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .stageCount = 2,
+        .pStages = shaderStages,
+        .pVertexInputState = &vertexInputInfo,
+        .pInputAssemblyState = &inputAssembly,
+        .pViewportState = &viewportState,
+        .pRasterizationState = &rasterizer,
+        .pMultisampleState = &multisampling,
+        .pDepthStencilState = nullptr, // Optional
+        .pColorBlendState = &colorBlending,
+        .pDynamicState = &dynamicState, // Optional
+        .layout = state->pipelineLayout,
+        .renderPass = state->renderPass,
+        .subpass = 0,
+        .basePipelineHandle = VK_NULL_HANDLE, // Optional
+        .basePipelineIndex = -1, // Optional
+    };
+
+    PANIC(vkCreateGraphicsPipelines(state->device, VK_NULL_HANDLE, 1, &pipelineInfo, state->allocator, &state->graphicsPipeline), "Failed to create graphics pipeline");
 
     vkDestroyShaderModule(state->device, fragShaderModule, state->allocator);
     vkDestroyShaderModule(state->device, vertShaderModule, state->allocator);
@@ -732,11 +979,14 @@ static ShaderInfo readFile(const char *filename) {
     shaderInfo.code = calloc(shaderInfo.length + 1, sizeof(char));
     if (shaderInfo.code == NULL) {
         PANIC(1, "Failed to allocate memory for file content");
+        fclose(file);
         return shaderInfo;
     }
 
     if (fread(shaderInfo.code, sizeof(char), shaderInfo.length, file) != shaderInfo.length) {
         PANIC(1, "Failed to read file %s", filename);
+        fclose(file);
+        free(shaderInfo.code);
         return shaderInfo;
     }
 
@@ -756,4 +1006,128 @@ VkShaderModule createShaderModule(State *state, ShaderInfo shader) {
     PANIC(vkCreateShaderModule(state->device, &shaderModuleCreateInfo, state->allocator, &shaderModule), "Failed to create shader module");
 
     return shaderModule;
+}
+
+static void createFramebuffers(State *state) {
+    state->swapChainFramebuffers = calloc(state->swapchain_image_count, sizeof(VkFramebuffer));
+    if (state->swapChainFramebuffers == NULL) {
+        PANIC(1, "Failed to allocate memory for framebuffers");
+        return;
+    }
+
+    for (int i = 0; i < state->swapchain_image_count; i++) {
+        VkImageView attachments[] = {
+            state->swapchain_image_views[i],
+        };
+
+        VkFramebufferCreateInfo framebufferInfo = {
+            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+            .renderPass = state->renderPass,
+            .attachmentCount = 1,
+            .pAttachments = attachments,
+            .width = state->swapchain_extent.width,
+            .height = state->swapchain_extent.height,
+            .layers = 1,
+        };
+
+        PANIC(vkCreateFramebuffer(state->device, &framebufferInfo, state->allocator, &state->swapChainFramebuffers[i]), "Failed to create framebuffer");
+    }
+}
+
+static void createCommandPool(State *state) {
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(state->surface, state->physical_device);
+
+    VkCommandPoolCreateInfo poolInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+        .queueFamilyIndex = queueFamilyIndices.graphicsFamily,
+    };
+
+    PANIC(vkCreateCommandPool(state->device, &poolInfo, state->allocator, &state->commandPool), "Failed to create command pool");
+}
+
+static void createCommandBuffer(State *state) {
+    VkCommandBufferAllocateInfo allocInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = state->commandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
+
+    PANIC(vkAllocateCommandBuffers(state->device, &allocInfo, &state->commandBuffer), "Failed to allocate command buffer");
+}
+
+static void recordCommandBuffer(State *state, VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+    VkCommandBufferBeginInfo beginInfo = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = 0,
+        .pInheritanceInfo = nullptr,
+    };
+
+    PANIC(vkBeginCommandBuffer(commandBuffer, &beginInfo), "Failed to begin recording command buffer");
+
+    VkClearValue clearColor = {
+        .color = {
+            .float32 = {0.0f, 0.0f, 0.0f, 1.0f}
+        }
+    };
+
+    VkRenderPassBeginInfo renderPassInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .renderPass = state->renderPass,
+        .framebuffer = state->swapChainFramebuffers[imageIndex],
+        .renderArea = {
+            .offset = {0, 0},
+            .extent = state->swapchain_extent,
+        },
+        .clearValueCount = 1,
+        .pClearValues = &clearColor,
+    };
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, state->graphicsPipeline);
+
+    VkViewport viewport = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = (float) state->swapchain_extent.width,
+        .height = (float) state->swapchain_extent.height,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
+    };
+
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+    VkRect2D scissor = {
+        .offset = {0, 0},
+        .extent = state->swapchain_extent,
+    };
+
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+    vkCmdEndRenderPass(commandBuffer);
+
+    PANIC(vkEndCommandBuffer(commandBuffer), "Failed to record command buffer");
+}
+
+static void createSyncObjects(State *state) {
+    VkSemaphoreCreateInfo imageAvailableSemaphoreInfo = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    };
+
+    VkSemaphoreCreateInfo renderFinishedSemaphoreInfo = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    };
+
+    VkFenceCreateInfo fenceInfo = {
+        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+        .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
+
+    PANIC(vkCreateSemaphore(state->device, &imageAvailableSemaphoreInfo, state->allocator, &state->imageAvailableSemaphore), "Failed to create image available semaphore");
+    PANIC(vkCreateSemaphore(state->device, &renderFinishedSemaphoreInfo, state->allocator, &state->renderFinishedSemaphore), "Failed to create render finished semaphore");
+    PANIC(vkCreateFence(state->device, &fenceInfo, state->allocator, &state->inFlightFence), "Failed to create in flight fence");
 }

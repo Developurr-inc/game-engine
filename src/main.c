@@ -30,30 +30,10 @@ void init(State *state) {
 void loop(State *state) {
     while (!glfwWindowShouldClose(state->window)) {
         glfwPollEvents();
-
-        // if (state->recreate_swapchain) {
-        //     state->recreate_swapchain = false;
-        //     createSwapchain(state);
-        // }
-
-        // uint32_t imageIndex;
-        // PANIC(vkAcquireNextImageKHR(state->device, state->swapchain, UINT64_MAX, nullptr, nullptr, &imageIndex), "couldn't acquire next image");
-        //
-        // VkPresentInfoKHR presentInfo = {
-        //     .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-        //     .swapchainCount = 1,
-        //     .pSwapchains = &state->swapchain,
-        //     .pImageIndices = &imageIndex,
-        // };
-        //
-        // VkResult result = vkQueuePresentKHR(state->queue, &presentInfo);
-        //
-        // if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-        //     state->recreate_swapchain = true;
-        // } else if (result != VK_SUCCESS) {
-        //     PANIC(result, "Failed to present image");
-        // }
+        drawFrame(state);
     }
+
+    vkDeviceWaitIdle(state->device);
 }
 
 void cleanup(State *state) {
@@ -80,8 +60,9 @@ int main(void) {
 
         .device_extensions = (char *[]) {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME,
         },
-        .device_extension_count = 1,
+        .device_extension_count = 2,
 
         .extensions = (char *[]) {
             VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,

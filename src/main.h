@@ -6,9 +6,9 @@
 #define MAIN_H
 
 #include <signal.h>
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan_beta.h>
 
 #define VARIANT 0
 #define MAJOR   1
@@ -69,6 +69,19 @@ typedef struct {
 
     VkFormat swapchain_image_format;
     VkExtent2D swapchain_extent;
+
+    VkRenderPass renderPass;
+    VkPipelineLayout pipelineLayout;
+    VkPipeline graphicsPipeline;
+
+    VkFramebuffer *swapChainFramebuffers;
+
+    VkCommandPool commandPool;
+    VkCommandBuffer commandBuffer;
+
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
+    VkFence inFlightFence;
 
     char **device_extensions;
     const uint32_t device_extension_count;

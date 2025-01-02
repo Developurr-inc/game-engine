@@ -6,6 +6,7 @@
 #define VULKAN_H
 
 void initVulkan(State *state);
+void drawFrame(State *state);
 void destroyVulkan(const State *state);
 
 #endif //VULKAN_H
