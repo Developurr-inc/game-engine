@@ -27,7 +27,7 @@
 # include <stdlib.h>
 # include <string.h>
 
-bool platform_create(
+bool1 platform_create(
     PlatformState *platform_state,
     const char *application_name,
     const int32 x,
@@ -200,7 +200,7 @@ void platform_destroy(const PlatformState *platform_state)
     platform_free(internal_state, false);
 }
 
-bool platform_pump_messages(PlatformState *platform_state) {
+bool1 platform_pump_messages(PlatformState *platform_state) {
     InternalState *internal_state = platform_state->internal_state;
 
     xcb_generic_event_t *event;
@@ -296,7 +296,7 @@ bool platform_pump_messages(PlatformState *platform_state) {
     return true;
 }
 
-void *platform_allocate(const uint64 size, const bool is_aligned)
+void *platform_allocate(const uint64 size, const bool1 is_aligned)
 {
     void *new_block = malloc(size);
     if (!new_block)
@@ -308,7 +308,7 @@ void *platform_allocate(const uint64 size, const bool is_aligned)
     return new_block;
 }
 
-void platform_free(void *block, const bool is_aligned) {
+void platform_free(void *block, const bool1 is_aligned) {
     if (block)
     {
         free(block);

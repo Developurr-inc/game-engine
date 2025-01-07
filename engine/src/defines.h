@@ -204,6 +204,9 @@
  *****                                                  TYPEDEFS                                                  *****
  **********************************************************************************************************************/
 
+/** @brief 1-bit boolean type */
+typedef bool bool1;
+
 /** @brief 8-bit boolean type */
 typedef uint8_t bool8;
 

@@ -15,7 +15,7 @@
 
 # include <windowsx.h>
 
-bool platform_create(
+bool1 platform_create(
     PlatformState *platform_state,
     const char *application_name,
     const int32 x,
@@ -104,7 +104,7 @@ bool platform_create(
 
     internal_state->h_window = window;
 
-    bool is_window_visible = true;
+    bool1 is_window_visible = true;
     int32 show_window_flags = is_window_visible ? SW_SHOW : SW_SHOWNOACTIVATE;
 
     ShowWindow(window, show_window_flags);
@@ -129,7 +129,7 @@ void platform_destroy(const PlatformState *platform_state)
     platform_free(internal_state, false);
 }
 
-bool platform_pump_messages(PlatformState *platform_state)
+bool1 platform_pump_messages(PlatformState *platform_state)
 {
     MSG message;
 
@@ -142,7 +142,7 @@ bool platform_pump_messages(PlatformState *platform_state)
     return true;
 }
 
-void *platform_allocate(uint64 size, bool is_aligned)
+void *platform_allocate(uint64 size, bool1 is_aligned)
 {
     void *new_block = malloc(size);
 
@@ -154,7 +154,7 @@ void *platform_allocate(uint64 size, bool is_aligned)
     return new_block;
 }
 
-void platform_free(void *block, bool is_aligned)
+void platform_free(void *block, bool1 is_aligned)
 {
     if (block)
     {
@@ -275,7 +275,7 @@ LRESULT CALLBACK win32_process_messages(HWND window, UINT message, WPARAM w_para
         case WM_SYSKEYDOWN:
         case WM_SYSKEYUP:
         {
-            // bool pressed = (message == WM_KEYDOWN || message == WM_SYSKEYDOWN);
+            // bool1 pressed = (message == WM_KEYDOWN || message == WM_SYSKEYDOWN);
 
             // TODO: input processing
 
@@ -313,7 +313,7 @@ LRESULT CALLBACK win32_process_messages(HWND window, UINT message, WPARAM w_para
         case WM_MBUTTONUP:
         case WM_RBUTTONUP:
         {
-            // bool pressed = (message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN || message == WM_MBUTTONDOWN);
+            // bool1 pressed = (message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN || message == WM_MBUTTONDOWN);
 
             // TODO: input processing
 

@@ -19,12 +19,12 @@ typedef struct PlatformState {
  *****                                             PROTECTED FUNCTIONS                                            *****
  **********************************************************************************************************************/
 
-bool platform_create(PlatformState *platform_state, const char *application_name, int32 x, int32 y, int32 width, int32 height);
+bool1 platform_create(PlatformState *platform_state, const char *application_name, int32 x, int32 y, int32 width, int32 height);
 void platform_destroy(const PlatformState *platform_state);
-bool platform_pump_messages(PlatformState *platform_state);
+bool1 platform_pump_messages(PlatformState *platform_state);
 
-void *platform_allocate(uint64 size, bool is_aligned);
-void platform_free(void *block, bool is_aligned);
+void *platform_allocate(uint64 size, bool1 is_aligned);
+void platform_free(void *block, bool1 is_aligned);
 void *platform_zero_memory(void *block, uint64 size);
 void *platform_copy_memory(void *destination, const void *source, uint64 size);
 void *platform_set_memory(void *destination, int32 value, uint64 size);

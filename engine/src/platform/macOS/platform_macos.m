@@ -55,11 +55,11 @@ typedef struct macos_handle_info {
 typedef struct InternalState {
     ApplicationDelegate *app_delegate;
     macos_handle_info handle;
-    bool quit_flagged;
+    bool1 quit_flagged;
     uint8 modifier_key_states;
 } InternalState;
 
-bool platform_create(
+bool1 platform_create(
     PlatformState *platform_state,
     const char *application_name,
     const int32 x,
@@ -116,7 +116,7 @@ void platform_destroy(const PlatformState *platform_state) {
     }
 }
 
-bool platform_pump_messages(PlatformState *platform_state) {
+bool1 platform_pump_messages(PlatformState *platform_state) {
     InternalState *internal_state = platform_state->internal_state;
 
     if (internal_state) {
@@ -145,7 +145,7 @@ bool platform_pump_messages(PlatformState *platform_state) {
     return true;
 }
 
-void *platform_allocate(const uint64 size, const bool is_aligned)
+void *platform_allocate(const uint64 size, const bool1 is_aligned)
 {
     void *new_block = malloc(size);
     if (!new_block)
@@ -157,7 +157,7 @@ void *platform_allocate(const uint64 size, const bool is_aligned)
     return new_block;
 }
 
-void platform_free(void *block, const bool is_aligned) {
+void platform_free(void *block, const bool1 is_aligned) {
     if (block)
     {
         free(block);

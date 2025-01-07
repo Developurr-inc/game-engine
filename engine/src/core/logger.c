@@ -13,7 +13,7 @@
  *****                                             PROTECTED FUNCTIONS                                            *****
  **********************************************************************************************************************/
 
-bool logger_create()
+bool1 logger_create()
 {
     // TODO: Implement logger initialization
     return true;
