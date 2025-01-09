@@ -40,7 +40,7 @@
 // Inlining
 
 // Clang or GCC
-# if defined(__clang__) || defined(__gcc__)
+# if defined(__clang__) || defined(__GNUC__) // __gcc__
 #  define N_INLINE     __attribute__((always_inline)) inline
 #  define N_NO_INLINE  __attribute__((noinline))
 
@@ -60,7 +60,7 @@
 // Deprecation
 
 // Clang or GCC
-# if defined(__clang__) || defined(__gcc__)
+# if defined(__clang__) || defined(__GNUC__) // __gcc__
 #  define N_DEPRECATED(message)  __attribute__((deprecated(message)))
 
 // MSVC
@@ -69,8 +69,7 @@
 
 // Unknown
 # else
-#  define N_DEPRECATED(message)
-// #  error "Unsupported compiler - don't know how to define deprecations!"
+#  error "Unsupported compiler - don't know how to define deprecations!"
 
 # endif
 
