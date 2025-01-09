@@ -71,8 +71,8 @@ Window *platform_window_create(
 
     InternalState *internal_state = memory->allocate(sizeof(InternalState), false);
     if (! internal_state) {
-        // N_FATAL("Failed to allocate memory for internal state");
         memory->free(window, false);
+        // N_FATAL("Failed to allocate memory for internal state");
         return nullptr;
     }
 

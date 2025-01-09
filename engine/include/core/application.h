@@ -16,9 +16,9 @@ typedef struct n_ApplicationConfig {
     char *name;
 } n_ApplicationConfig;
 
-# include <game_types.h>
+#include <game_types.h>
 
-N_API bool1 n_application_create(struct game *game);
+N_API bool1 n_application_create(Game *game_instance);
 N_API bool1 n_application_run();
 
 #endif //APPLICATION_H

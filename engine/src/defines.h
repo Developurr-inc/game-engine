@@ -68,10 +68,11 @@
 #  define N_DEPRECATED(message)  __declspec(deprecated(message))
 
 // Unknown
-#else
-# error "Unsupported compiler - don't know how to define deprecations!"
+# else
+#  define N_DEPRECATED(message)
+// #  error "Unsupported compiler - don't know how to define deprecations!"
 
-#endif
+# endif
 
 
 // Byte Sizes
@@ -148,7 +149,7 @@ typedef struct range32 {
 
 N_INLINE uint64 get_aligned(const uint64 operand, const uint64 granularity)
 {
-    return operand + (granularity - 1) & ~(granularity - 1);
+    return (operand + (granularity - 1)) & ~(granularity - 1);
 }
 
 N_INLINE range64 get_aligned_range(const int64 offset, const uint64 size, const uint64 granularity)

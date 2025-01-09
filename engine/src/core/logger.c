@@ -39,16 +39,15 @@ void log_message(const ELogLevel level, const char *message, ...)
         "FAT",
     };
 
-    const int32 buffer_size = 32000;
-    char buffer[buffer_size] = {0};
+    char buffer[32000] = {0};
     __builtin_va_list arg_ptr;
 
     va_start(arg_ptr, message);
-    (void) vsnprintf(buffer, buffer_size, message, arg_ptr);
+    (void) vsnprintf(buffer, 32000, message, arg_ptr);
     va_end(arg_ptr);
 
-    char output[buffer_size] = {0};
-    (void) snprintf(output, buffer_size, "[%s] - %s\n", level_strings[level], buffer);
+    char output[32000] = {0};
+    (void) snprintf(output, 32000, "[%s] - %s\n", level_strings[level], buffer);
 
     Console *console = platform_console_create();
 

@@ -27,7 +27,7 @@ typedef struct ApplicationState {
 static bool1 g_isInitialized = false;
 static ApplicationState g_appState;
 
-bool1 n_application_create(struct game *game_instance) {
+bool1 n_application_create(Game *game_instance) {
     if (g_isInitialized) {
         N_ERROR("n_application_create: Application already initialized");
         return false;

@@ -6,13 +6,19 @@
 
 #ifdef N_PLATFORM_WINDOWS
 
+#include "PAL/memory.h"
+
 # include <windows.h>
 
 static float64 platform_get_absolute_time();
-static void platform_sleep(const uint64 milliseconds);
+static void platform_sleep(uint64 milliseconds);
 
 Time *platform_time_create() {
-    Time *time = platform_allocate(sizeof(Time), false);
+    Memory *memory = platform_memory_create();
+
+    Time *time = memory->allocate(sizeof(Time), false);
+
+    platform_memory_destroy(memory);
 
     time->get_absolute_time = platform_get_absolute_time;
     time->sleep = platform_sleep;
@@ -21,7 +27,11 @@ Time *platform_time_create() {
 }
 
 void platform_time_destroy(Time *time) {
-    platform_free(time, false);
+    Memory *memory = platform_memory_create();
+
+    memory->free(time, false);
+
+    platform_memory_destroy(memory);
 }
 
 static float64 platform_get_absolute_time() {

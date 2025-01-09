@@ -7,8 +7,6 @@
 
 #include "game.h"
 
-#include <PAL/console.h>
-
 bool create_game(Game *out_game) {
     out_game->app_config.name = "Nayla Game Engine";
     out_game->app_config.start_pos_x = 100;
@@ -20,11 +18,6 @@ bool create_game(Game *out_game) {
     out_game->update = game_update;
     out_game->render = game_render;
     out_game->on_resize = game_on_resize;
-
-    Console *console = platform_console_create();
-
-
-    console->write_error("jdjasdasjnd", 32);
 
     out_game->state = malloc(sizeof(GameState));
 

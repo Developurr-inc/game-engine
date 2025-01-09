@@ -6,6 +6,8 @@
 
 #ifdef N_PLATFORM_WINDOWS
 
+#include "PAL/memory.h"
+
 # include <windows.h>
 # include <windowsx.h>
 
@@ -19,46 +21,61 @@ typedef struct InternalState {
 } InternalState;
 
 /**********************************************************************************************************************
- *****                                              PRIVATE FUNCTIONS                                              *****
+ *****                                              PRIVATE FUNCTIONS                                             *****
  **********************************************************************************************************************/
 
 static LRESULT CALLBACK win32_process_messages(HWND window, UINT message, WPARAM w_param, LPARAM l_param);
 
-bool1 platform_create(
+Window *platform_window_create(
     const char *application_name,
     const int32 x,
     const int32 y,
     const int32 width,
     const int32 height
 ) {
-    platform_state->internal_state = platform_allocate(sizeof(InternalState), false);
-    if (!platform_state->internal_state)
-    {
-        return false;
+    Memory *memory = platform_memory_create();
+
+    Window *window = memory->allocate(sizeof(Window), false);
+    if (!window) {
+        // N_FATAL("Failed to allocate memory for window");
+        return nullptr;
     }
 
-    InternalState *internal_state = platform_state->internal_state;
+    InternalState *internal_state = memory->allocate(sizeof(InternalState), false);
+    if (!internal_state) {
+        memory->free(window, false);
 
-    internal_state->h_instance = GetModuleHandleA(0);
+        platform_memory_destroy(memory);
 
-    HICON icon = LoadIcon(0, IDI_APPLICATION);
+        // N_FATAL("Failed to allocate memory for internal state");
+        return nullptr;
+    }
+
+    internal_state->h_instance = GetModuleHandleA(nullptr);
+
+    HICON icon = LoadIcon(nullptr, IDI_APPLICATION);
     WNDCLASSA window_class = {
         .style = CS_DBLCLKS,
         .lpfnWndProc = win32_process_messages,
         .hInstance = internal_state->h_instance,
         .lpszClassName = "Nayla window class",
         .hIcon = icon,
-        .hCursor = LoadCursor(NULL, IDC_ARROW),
-        .hbrBackground = 0,
-        .lpszMenuName = 0,
+        .hCursor = LoadCursor(nullptr, IDC_ARROW),
+        .hbrBackground = nullptr,
+        .lpszMenuName = nullptr,
         .cbClsExtra = 0,
         .cbWndExtra = 0
     };
 
     if (!RegisterClassA(&window_class))
     {
-        MessageBoxA(0, "Failed to register window class", "Error", MB_ICONEXCLAMATION | MB_OK);
-        return false;
+        memory->free(window, false);
+        memory->free(internal_state, false);
+
+        platform_memory_destroy(memory);
+
+        MessageBoxA(nullptr, "Failed to register window class", "Error", MB_ICONEXCLAMATION | MB_OK);
+        return nullptr;
     }
 
     // Create window
@@ -73,7 +90,7 @@ bool1 platform_create(
     uint32 window_width = client_width;
     uint32 window_height = client_height;
 
-    uint32 window_style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_TICKFRAME;
+    uint32 window_style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME;
     uint32 window_ex_style = WS_EX_APPWINDOW;
 
     RECT border_rect = {0, 0, 0, 0};
@@ -85,7 +102,7 @@ bool1 platform_create(
     window_width += border_rect.right - border_rect.left;
     window_height += border_rect.bottom - border_rect.top;
 
-    HWND window = CreateWindowExA(
+    HWND h_window = CreateWindowExA(
         window_ex_style,
         "Nayla window class",
         application_name,
@@ -94,33 +111,38 @@ bool1 platform_create(
         window_y,
         window_width,
         window_height,
-        0,
-        0,
+        nullptr,
+        nullptr,
         internal_state->h_instance,
-        0
+        nullptr
     );
 
-    if (!window)
+    if (!h_window)
     {
-        platform_free(internal_state, false);
+        memory->free(window, false);
+        memory->free(internal_state, false);
 
-        MessageBoxA(0, "Failed to create window", "Error", MB_ICONEXCLAMATION | MB_OK);
+        platform_memory_destroy(memory);
 
-        N_FATAL("Failed to create window");
-        return false;
+        MessageBoxA(nullptr, "Failed to create window", "Error", MB_ICONEXCLAMATION | MB_OK);
+
+        // N_FATAL("Failed to create window");
+        return nullptr;
     }
 
-    internal_state->h_window = window;
+    internal_state->h_window = h_window;
 
     bool1 is_window_visible = true;
     int32 show_window_flags = is_window_visible ? SW_SHOW : SW_SHOWNOACTIVATE;
 
-    ShowWindow(window, show_window_flags);
+    ShowWindow(h_window, show_window_flags);
 
-    return true;
+    platform_memory_destroy(memory);
+
+    return window;
 }
 
-void platform_destroy(const Window *window)
+void platform_window_destroy(const Window *window)
 {
     InternalState *internal_state = window->data;
 
@@ -134,14 +156,18 @@ void platform_destroy(const Window *window)
         UnregisterClassA("Nayla window class", internal_state->h_instance);
     }
 
-    platform_free(internal_state, false);
+    Memory *memory = platform_memory_create();
+
+    memory->free(internal_state, false);
+
+    platform_memory_destroy(memory);
 }
 
 static bool1 platform_pump_messages(const Window *window)
 {
     MSG message;
 
-    while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE))
+    while (PeekMessageA(&message, nullptr, 0, 0, PM_REMOVE))
     {
         TranslateMessage(&message);
         DispatchMessageA(&message);
@@ -234,6 +260,7 @@ static LRESULT CALLBACK win32_process_messages(HWND window, UINT message, WPARAM
 
             break;
         }
+        default: break;
     }
 
     return DefWindowProcA(window, message, w_param, l_param);

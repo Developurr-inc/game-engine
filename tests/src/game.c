@@ -4,8 +4,6 @@
 
 #include "game.h"
 
-
-
 bool1 game_initialize(Game *game) {
     return true;
 }
@@ -19,5 +17,5 @@ bool1 game_render(Game *game, float32 delta_time) {
 }
 
 void game_on_resize(Game *game, uint32 width, uint32 height) {
-    return;
+
 }
