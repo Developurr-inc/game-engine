@@ -142,7 +142,7 @@ Window *platform_window_create(
     return window;
 }
 
-void platform_window_destroy(const Window *window)
+void platform_window_destroy(Window *window)
 {
     InternalState *internal_state = window->data;
 

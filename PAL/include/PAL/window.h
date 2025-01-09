@@ -23,7 +23,7 @@ typedef struct Window {
  **********************************************************************************************************************/
 
 PLAT_API Window *platform_window_create (const char *application_name, int32 x, int32 y, int32 width, int32 height);
-PLAT_API void    platform_window_destroy(const Window *window);
+PLAT_API void    platform_window_destroy(Window *window);
 
 // PLAT_API bool1 platform_window_pump_messages(Window *window);
 
