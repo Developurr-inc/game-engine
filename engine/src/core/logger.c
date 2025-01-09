@@ -2,7 +2,7 @@
 // Created by Vinícius Ferreira Aguiar on 05/01/25.
 //
 
-#include "../platform/platform.h"
+#include <PAL/console.h>
 
 #include <core/logger.h>
 
@@ -50,12 +50,16 @@ void log_message(const ELogLevel level, const char *message, ...)
     char output[buffer_size] = {0};
     (void) snprintf(output, buffer_size, "[%s] - %s\n", level_strings[level], buffer);
 
+    Console *console = platform_console_create();
+
     if (level > LOG_LEVEL_WARNING)
     {
-        platform_console_error(output, (uint8) level);
+        console->write_error(output, (uint8) level);
     }
     else
     {
-        platform_console_write(output, (uint8) level);
+        console->write_output(output, (uint8) level);
     }
+
+    platform_console_destroy(console);
 }

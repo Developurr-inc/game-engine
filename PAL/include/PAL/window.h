@@ -1,29 +1,30 @@
 //
-// Created by Vinícius Ferreira Aguiar on 06/01/25.
+// Created by Vinícius Ferreira Aguiar on 08/01/25.
 //
 
-#ifndef PLATFORM_WIN32_H
-# define PLATFORM_WIN32_H
+#ifndef WINDOW_H
+# define WINDOW_H
 
-# ifdef N_PLATFORM_WINDOWS
-
-# include <windows.h>
+# include <platform.h>
+# include <PAL/types.h>
 
 /**********************************************************************************************************************
  *****                                                   STRUCTS                                                  *****
  **********************************************************************************************************************/
 
-typedef struct InternalState {
-    HINSTANCE h_instance;
-    HWND h_window;
-} InternalState;
+typedef struct Window {
+    void *data;
+
+    bool1 (* pump_messages)(struct Window *window);
+} Window;
 
 /**********************************************************************************************************************
- *****                                              PRIVATE FUNCTIONS                                              *****
+ *****                                              PUBLIC FUNCTIONS                                              *****
  **********************************************************************************************************************/
 
-static LRESULT CALLBACK win32_process_messages(HWND window, UINT message, WPARAM w_param, LPARAM l_param);
+PLAT_API Window *platform_window_create (const char *application_name, int32 x, int32 y, int32 width, int32 height);
+PLAT_API void    platform_window_destroy(Window *window);
 
-# endif
+// PLAT_API bool1 platform_window_pump_messages(Window *window);
 
-#endif //PLATFORM_WIN32_H
+#endif //WINDOW_H

@@ -1,14 +1,10 @@
 //
-// Created by Vinícius Ferreira Aguiar on 06/01/25.
+// Created by Vinícius Ferreira Aguiar on 08/01/25.
 //
 
-#include "../platform.h"
+#include <PAL/window.h>
 
 #ifdef N_PLATFORM_LINUX
-
-# include "platform_linux.h"
-
-# include <core/logger.h>
 
 # include <xcb/xcb.h>
 # include <x11/keysym.h>
@@ -294,90 +290,6 @@ bool1 platform_pump_messages(PlatformState *platform_state) {
     }
 
     return true;
-}
-
-void *platform_allocate(const uint64 size, const bool1 is_aligned)
-{
-    void *new_block = malloc(size);
-    if (!new_block)
-    {
-        N_FATAL("Failed to allocate memory");
-        return NULL;
-    }
-
-    return new_block;
-}
-
-void platform_free(void *block, const bool1 is_aligned) {
-    if (block)
-    {
-        free(block);
-    }
-}
-
-void *platform_zero_memory(void *block, const uint64 size) {
-    return platform_set_memory(block, 0, size);
-}
-
-void *platform_copy_memory(void *destination, const void *source, const uint64 size) {
-    return memcpy(destination, source, size);
-}
-
-void *platform_set_memory(void *destination, const int32 value, const uint64 size) {
-    return memset(destination, value, size);
-}
-
-void platform_console_write(const char *message, const uint8 color) {
-    const char *reset_color = "\033[0m";
-    const char *color_strings[6] = {
-        "\033[1;30m",
-        "\033[1;34m",
-        "\033[1;32m",
-        "\033[1;33m",
-        "\033[1;31m",
-        "\033[0;41m",
-    };
-
-    fprintf(stdout, "%s%s%s", color_strings[color], message, reset_color);
-}
-
-void platform_console_error(const char *message, const uint8 color) {
-    const char *reset_color = "\033[0m";
-    const char *color_strings[6] = {
-        "\033[1;30m",
-        "\033[1;34m",
-        "\033[1;32m",
-        "\033[1;33m",
-        "\033[1;31m",
-        "\033[0;41m",
-    };
-
-    fprintf(stderr, "%s%s%s", color_strings[color], message, reset_color);
-}
-
-float64 platform_get_absolute_time() {
-    struct timespec time;
-    clock_gettime(CLOCK_MONOTONIC, &time);
-
-    return (float64)time.tv_sec + (float64)time.tv_nsec / 1000000000.0;
-}
-
-void platform_sleep(uint64 milliseconds) {
-# if _POSIX_C_SOURCE >= 199309L
-    struct timespec time;
-
-    time.tv_sec = milliseconds / 1000;
-    time.tv_nsec = (milliseconds % 1000) * 1000 * 1000;
-
-    nanosleep(&time, 0);
-# else
-    if (milliseconds >= 1000)
-    {
-        sleep(milliseconds / 1000);
-    }
-
-    usleep(milliseconds % 1000 * 1000);
-#endif
 }
 
 #endif

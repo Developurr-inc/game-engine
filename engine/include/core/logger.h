@@ -74,6 +74,6 @@ void logger_destroy();
  *****                                              PUBLIC FUNCTIONS                                              *****
  **********************************************************************************************************************/
 
-N_API void log_message(ELogLevel level, const char *message, ...);
+void log_message(ELogLevel level, const char *message, ...);
 
 #endif //LOGGER_H

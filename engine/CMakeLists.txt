@@ -1,23 +1,28 @@
 project(engine C)
 
 set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ObjC -fPIC -g3 -Wall -Wextra -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion -fsanitize=undefined,address -fsanitize-trap")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -g3 -Wall -Wextra -Wconversion -Wdouble-promotion -Wno-unused-parameter -Wno-unused-function -Wno-sign-conversion -fsanitize=undefined,address -fsanitize-trap")
 
-add_library(${PROJECT_NAME} SHARED
+set(SOURCES
+        include/game_types.h
+        include/entry.h
+        include/core/logger.h
+        include/core/application.h
         src/defines.h
         src/core/logger.c
-        include/core/logger.h
         src/core/asserts.c
-        include/core/asserts.h
+        src/core/asserts.h
+        src/core/application.c
+        src/core/n_memory.h
+        src/core/n_memory.c
         src/platform/platform.h
-        src/platform/windows/platform_win32.c
-        src/platform/windows/platform_win32.h
-        src/platform/linux/platform_linux.c
-        src/platform/linux/platform_linux.h
-        src/platform/macOS/platform_macos.m)
+)
+
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_link_libraries(${PROJECT_NAME} PRIVATE objc "-framework AppKit -framework QuartzCore")
+target_link_libraries(${PROJECT_NAME} PRIVATE PAL::platform)
 
 add_library(nayla::engine ALIAS ${PROJECT_NAME})

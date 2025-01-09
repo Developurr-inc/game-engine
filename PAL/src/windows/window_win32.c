@@ -1,28 +1,36 @@
 //
-// Created by Vinícius Ferreira Aguiar on 05/01/25.
+// Created by Vinícius Ferreira Aguiar on 08/01/25.
 //
 
-#include "../platform.h"
+#include <PAL/window.h>
 
 #ifdef N_PLATFORM_WINDOWS
 
-# include "platform_win32.h"
-
-#include <core/logger.h>
-
-# include <stdlib.h>
-# include <string.h>
-
+# include <windows.h>
 # include <windowsx.h>
 
+/**********************************************************************************************************************
+ *****                                                   STRUCTS                                                  *****
+ **********************************************************************************************************************/
+
+typedef struct InternalState {
+    HINSTANCE h_instance;
+    HWND h_window;
+} InternalState;
+
+/**********************************************************************************************************************
+ *****                                              PRIVATE FUNCTIONS                                              *****
+ **********************************************************************************************************************/
+
+static LRESULT CALLBACK win32_process_messages(HWND window, UINT message, WPARAM w_param, LPARAM l_param);
+
 bool1 platform_create(
-    PlatformState *platform_state,
     const char *application_name,
     const int32 x,
     const int32 y,
     const int32 width,
-    const int32 height)
-{
+    const int32 height
+) {
     platform_state->internal_state = platform_allocate(sizeof(InternalState), false);
     if (!platform_state->internal_state)
     {
@@ -112,9 +120,9 @@ bool1 platform_create(
     return true;
 }
 
-void platform_destroy(const PlatformState *platform_state)
+void platform_destroy(const Window *window)
 {
-    InternalState *internal_state = platform_state->internal_state;
+    InternalState *internal_state = window->data;
 
     if (internal_state->h_window)
     {
@@ -129,7 +137,7 @@ void platform_destroy(const PlatformState *platform_state)
     platform_free(internal_state, false);
 }
 
-bool1 platform_pump_messages(PlatformState *platform_state)
+static bool1 platform_pump_messages(const Window *window)
 {
     MSG message;
 
@@ -142,100 +150,7 @@ bool1 platform_pump_messages(PlatformState *platform_state)
     return true;
 }
 
-void *platform_allocate(uint64 size, bool1 is_aligned)
-{
-    void *new_block = malloc(size);
-
-    if (!new_block)
-    {
-        N_FATAL("Failed to allocate memory");
-    }
-
-    return new_block;
-}
-
-void platform_free(void *block, bool1 is_aligned)
-{
-    if (block)
-    {
-        free(block);
-    }
-}
-
-void *platform_zero_memory(void *block, const uint64 size)
-{
-    return platform_set_memory(block, 0, size);
-}
-
-void *platform_copy_memory(void *destination, const void *source, const uint64 size)
-{
-    return memcpy(destination, source, size);
-}
-
-void *platform_set_memory(void *destination, const int32 value, const uint64 size)
-{
-    return memset(destination, value, size);
-}
-
-void platform_console_write(const char *message, const uint8 color)
-{
-    static uint8 color_levels[6] = {
-        64,
-        4,
-        6,
-        2,
-        1,
-        8,
-    };
-
-    uint64 message_length = strlen(message);
-    LPDWORD number_of_characters_written = 0;
-
-    HANDLE console_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(console_handle, color_levels[color]);
-
-    OutputDebugStringA(message);
-    WriteConsoleA(console_handle, message, (DWORD) message_length, number_of_characters_written, 0);
-}
-
-void platform_console_error(const char *message, const uint8 color)
-{
-    static uint8 color_levels[6] = {
-        64,
-        4,
-        6,
-        2,
-        1,
-        8,
-    };
-
-    uint64 message_length = strlen(message);
-    LPDWORD number_of_characters_written = 0;
-
-    HANDLE console_handle = GetStdHandle(STD_ERROR_HANDLE);
-    SetConsoleTextAttribute(console_handle, color_levels[color]);
-
-    OutputDebugStringA(message);
-    WriteConsoleA(console_handle, message, (DWORD) message_length, number_of_characters_written, 0);
-}
-
-float64 platform_get_absolute_time()
-{
-    LARGE_INTEGER performance_counter;
-    LARGE_INTEGER performance_frequency;
-
-    QueryPerformanceCounter(&performance_counter);
-    QueryPerformanceFrequency(&performance_frequency);
-
-    return (float64) performance_counter.QuadPart / (float64) performance_frequency.QuadPart;
-}
-
-void platform_sleep(const uint64 milliseconds)
-{
-    Sleep((DWORD) milliseconds);
-}
-
-LRESULT CALLBACK win32_process_messages(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
+static LRESULT CALLBACK win32_process_messages(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
 {
     switch (message)
     {

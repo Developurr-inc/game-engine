@@ -2,21 +2,31 @@
 // Created by Vinícius Ferreira Aguiar on 04/01/25.
 //
 
-#include <core/application.h>
-#include <core/logger.h>
-#include <core/asserts.h>
+#include <entry.h>
+#include <stdlib.h>
 
-int main() {
-    N_FATAL("Fatal message");
-    N_ERROR("Error message");
-    N_WARNING("Warning message");
-    N_INFO("Info message");
-    N_DEBUG("Debug message");
-    N_TRACE("Trace message");
+#include "game.h"
 
-    // application_create();
-    // application_run();
-    // application_destroy();
+#include <PAL/console.h>
 
-    return 0;
+bool create_game(Game *out_game) {
+    out_game->app_config.name = "Nayla Game Engine";
+    out_game->app_config.start_pos_x = 100;
+    out_game->app_config.start_pos_y = 100;
+    out_game->app_config.start_width = 1280;
+    out_game->app_config.start_height = 720;
+
+    out_game->initialize = game_initialize;
+    out_game->update = game_update;
+    out_game->render = game_render;
+    out_game->on_resize = game_on_resize;
+
+    Console *console = platform_console_create();
+
+
+    console->write_error("jdjasdasjnd", 32);
+
+    out_game->state = malloc(sizeof(GameState));
+
+    return true;
 }
