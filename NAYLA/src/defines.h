@@ -5,27 +5,12 @@
 #ifndef DEFINES_H
 # define DEFINES_H
 
+#include <PAL/inline.h>
 #include <PAL/types.h>
 
 /**********************************************************************************************************************
  *****                                                  DEFINES                                                   *****
  **********************************************************************************************************************/
-
-# ifdef N_EXPORT
-#  ifdef _MSC_VER
-#   define N_API  __declspec(dllexport)
-#  else
-#   define N_API  __attribute__((visibility("default")))
-#  endif
-# else
-#  ifdef _MSC_VER
-#   define N_API  __declspec(dllimport)
-#  else
-#   define N_API
-#  endif
-# endif
-
-// Debugging
 
 // Debug
 # ifdef _DEBUG
@@ -36,43 +21,6 @@
 #  define NAYLA_RELEASE
 
 # endif
-
-// Inlining
-
-// Clang or GCC
-# if defined(__clang__) || defined(__GNUC__) // __gcc__
-#  define N_INLINE     __attribute__((always_inline)) inline
-#  define N_NO_INLINE  __attribute__((noinline))
-
-// MSVC
-# elif defined(_MSC_VER)
-#  define N_INLINE     __forceinline
-#  define N_NO_INLINE  __declspec(noinline)
-
-// Unknown
-# else
-#  define N_INLINE     static inline
-#  define N_NO_INLINE
-
-# endif
-
-
-// Deprecation
-
-// Clang or GCC
-# if defined(__clang__) || defined(__GNUC__) // __gcc__
-#  define N_DEPRECATED(message)  __attribute__((deprecated(message)))
-
-// MSVC
-# elif defined(_MSC_VER)
-#  define N_DEPRECATED(message)  __declspec(deprecated(message))
-
-// Unknown
-# else
-#  error "Unsupported compiler - don't know how to define deprecations!"
-
-# endif
-
 
 // Byte Sizes
 
@@ -146,12 +94,12 @@ typedef struct range32 {
  *****                                                  FUNCTIONS                                                 *****
  **********************************************************************************************************************/
 
-N_INLINE uint64 get_aligned(const uint64 operand, const uint64 granularity)
+PAL_INLINE uint64 get_aligned(const uint64 operand, const uint64 granularity)
 {
     return (operand + (granularity - 1)) & ~(granularity - 1);
 }
 
-N_INLINE range64 get_aligned_range(const int64 offset, const uint64 size, const uint64 granularity)
+PAL_INLINE range64 get_aligned_range(const int64 offset, const uint64 size, const uint64 granularity)
 {
     const range64 range = {
         .size = get_aligned(offset, granularity),

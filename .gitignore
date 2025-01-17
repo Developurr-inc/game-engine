@@ -1,8 +1,5 @@
-/build*
 /cmake-build*
 /CMakeFiles
 /CMakeCache.txt
 /CMakeScripts
 /CMakeTmp
-
-*.spv

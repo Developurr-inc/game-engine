@@ -5,7 +5,7 @@
 #ifndef GAME_H
 # define GAME_H
 
-# include <game_types.h>
+# include <NAYLA/types.h>
 
 typedef struct GameState {
     float32 delta_time;

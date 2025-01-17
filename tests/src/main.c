@@ -2,8 +2,8 @@
 // Created by Vinícius Ferreira Aguiar on 04/01/25.
 //
 
+#include <NAYLA/memory.h>
 #include <entry.h>
-#include <stdlib.h>
 
 #include "game.h"
 
@@ -19,7 +19,7 @@ bool create_game(Game *out_game) {
     out_game->render = game_render;
     out_game->on_resize = game_on_resize;
 
-    out_game->state = malloc(sizeof(GameState));
+    out_game->state = n_memory_alloc(sizeof(GameState), MEMORY_TAG_GAME);
 
     return true;
 }

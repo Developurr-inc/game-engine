@@ -2,40 +2,24 @@
 // Created by Vinícius Ferreira Aguiar on 08/01/25.
 //
 
+#include "../platform_detection.h"
+
+#ifdef PLATFORM_MACOS
 #include <PAL/console.h>
 
-#ifdef N_PLATFORM_APPLE
+#include <stdio.h>
 
-# include <stdio.h>
+static void pal_console_write(FILE *stream, const char *message, uint8 color);
 
-static void platform_console_write(FILE *stream, const char *message, uint8 color);
-static void platform_console_write_output(const char *message, uint8 color);
-static void platform_console_write_error(const char *message, uint8 color);
-
-Console *platform_console_create() {
-    // TODO: Dynamic allocation
-    static Console console;
-
-    console.write_output = platform_console_write_output;
-    console.write_error  = platform_console_write_error;
-
-    return &console;
+void pal_console_message(const char *message, const uint8 color) {
+    pal_console_write(stdout, message, color);
 }
 
-void platform_console_destroy(const Console *console) {
-    // TODO: Free dynamic allocation
-    (void) console;
+void pal_console_error(const char *message, const uint8 color) {
+    pal_console_write(stderr, message, color);
 }
 
-static void platform_console_write_output(const char *message, const uint8 color) {
-    platform_console_write(stdout, message, color);
-}
-
-static void platform_console_write_error(const char *message, const uint8 color) {
-    platform_console_write(stderr, message, color);
-}
-
-static void platform_console_write(FILE *stream, const char *message, const uint8 color) {
+static void pal_console_write(FILE *stream, const char *message, const uint8 color) {
     const char *reset_color = "\033[0m";
     const char *color_strings[6] = {
         "\033[1;30m",

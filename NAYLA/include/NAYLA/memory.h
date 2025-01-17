@@ -3,9 +3,10 @@
 //
 
 #ifndef N_MEMORY_H
-# define N_MEMORY_H
+#define N_MEMORY_H
 
-# include "../defines.h"
+#include <NAYLA/export.h>
+#include <NAYLA/types.h>
 
 typedef enum memory_tag {
     MEMORY_TAG_UNKNOWN,
@@ -27,17 +28,12 @@ typedef enum memory_tag {
     MEMORY_TAG_SCENE,
 
     MEMORY_TAG_MAX_TAGS
-} MemoryTag;
+} EMemoryTag;
 
-bool1 memory_start();
-void memory_destroy();
-
-N_API void *n_memory_alloc(uint64 size, MemoryTag tag);
-N_API void  n_memory_free(void *block, uint64 size, MemoryTag tag);
-N_API void *n_memory_copy(void *destination, void *source, uint64 size);
-N_API void *n_memory_zero(void *block, uint64 size);
-N_API void *n_memory_set(void *block, uint8 value, uint64 size);
-
-N_API char *n_memory_get_usage();
+N_EXPORT void *n_memory_alloc(uint64 size, EMemoryTag tag);
+N_EXPORT void  n_memory_free (void *block, uint64 size, EMemoryTag tag);
+N_EXPORT void *n_memory_copy (void *destination, const void *source, uint64 size);
+N_EXPORT void *n_memory_zero (void *block, uint64 size);
+N_EXPORT void *n_memory_set  (void *block, uint8 value, uint64 size);
 
 #endif //N_MEMORY_H

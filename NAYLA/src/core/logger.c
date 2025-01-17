@@ -2,25 +2,27 @@
 // Created by Vinícius Ferreira Aguiar on 05/01/25.
 //
 
+#include <NAYLA/logger.h>
+
 #include <PAL/console.h>
 
-#include <core/logger.h>
+#include "_logger.h"
 
 #include <stdio.h>
 #include <stdarg.h>
+
+#define MAX_BUFFER  32000
 
 /**********************************************************************************************************************
  *****                                             PROTECTED FUNCTIONS                                            *****
  **********************************************************************************************************************/
 
-bool1 logger_create()
-{
+bool1 logger_create() {
     // TODO: Implement logger initialization
     return true;
 }
 
-void logger_destroy()
-{
+void logger_destroy() {
     // TODO: Implement logger closing / write queued up messages
 }
 
@@ -28,9 +30,8 @@ void logger_destroy()
  *****                                              PUBLIC FUNCTIONS                                              *****
  **********************************************************************************************************************/
 
-void log_message(const ELogLevel level, const char *message, ...)
-{
-    const char *level_strings[] = {
+void n_logger_message(const ELogLevel level, const char *message, ...) {
+    static const char *level_strings[6] = {
         "TRC",
         "DBG",
         "INF",
@@ -39,26 +40,20 @@ void log_message(const ELogLevel level, const char *message, ...)
         "FAT",
     };
 
-    char buffer[32000] = {0};
+    char buffer[MAX_BUFFER] = {0};
+    char output[MAX_BUFFER] = {0};
+
     __builtin_va_list arg_ptr;
 
     va_start(arg_ptr, message);
-    (void) vsnprintf(buffer, 32000, message, arg_ptr);
+    (void) vsnprintf(buffer, MAX_BUFFER, message, arg_ptr);
     va_end(arg_ptr);
 
-    char output[32000] = {0};
-    (void) snprintf(output, 32000, "[%s] - %s\n", level_strings[level], buffer);
+    (void) snprintf(output, MAX_BUFFER, "[%s] - %s\n", level_strings[level], buffer);
 
-    Console *console = platform_console_create();
-
-    if (level > LOG_LEVEL_WARNING)
-    {
-        console->write_error(output, (uint8) level);
+    if (level >= LOG_LEVEL_ERROR) {
+        pal_console_error(output, (uint8) level);
+    } else {
+        pal_console_message(output, (uint8) level);
     }
-    else
-    {
-        console->write_output(output, (uint8) level);
-    }
-
-    platform_console_destroy(console);
 }

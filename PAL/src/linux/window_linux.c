@@ -23,6 +23,15 @@
 # include <stdlib.h>
 # include <string.h>
 
+typedef struct InternalState {
+    Display *display;
+    xcb_connection_t *connection;
+    xcb_screen_t *screen;
+    xcb_window_t window;
+    xcb_atom_t wm_protocols;
+    xcb_atom_t wm_delete_window;
+} InternalState;
+
 bool1 platform_create(
     PlatformState *platform_state,
     const char *application_name,

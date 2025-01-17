@@ -1,5 +1,5 @@
 # Define the project and specify the C standard
-project(PAL C)
+project(NAYLA C)
 
 # Set the C standard to C23
 set(CMAKE_C_STANDARD 23)
@@ -23,59 +23,41 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif ()
 
 # ------------------------------
-# Shared Configuration
+#  Configuration
 # ------------------------------
-# Define shared source files
-file(GLOB SOURCES
-        "src/debug.h"
-        "src/platform_detection.h"
-        "include/PAL/export.h"
-        "include/PAL/*.h"
+# Define source files
+set(SOURCES
+        include/NAYLA/application.h
+        include/NAYLA/export.h
+        include/NAYLA/logger.h
+        include/NAYLA/memory.h
+        include/NAYLA/types.h
+        include/entry.h
+        src/core/_asserts.h
+        src/core/_event.h
+        src/core/_logger.h
+        src/core/_memory.h
+        src/core/application.c
+        src/core/asserts.c
+        src/core/event.c
+        src/core/logger.c
+        src/core/memory.c
+        src/debug.h
+        src/defines.h
 )
-
-# ------------------------------
-# Platform-Specific Sources
-# ------------------------------
-# Define platform-specific source files
-if (APPLE)
-    # Add Objective-C flags for macOS
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ObjC")
-
-    # Add macOS-specific source files
-    file(GLOB APPLE_SOURCES "src/macOS/*")
-    list(APPEND SOURCES ${APPLE_SOURCES})
-endif ()
-
-if (UNIX AND NOT APPLE)
-    # Add Linux-specific source files
-    file(GLOB LINUX_SOURCES "src/linux/*")
-    list(APPEND SOURCES ${LINUX_SOURCES})
-endif ()
-
-if (WIN32)
-    # Add Windows-specific source files
-    file(GLOB WIN32_SOURCES "src/windows/*.c")
-    list(APPEND SOURCES ${WIN32_SOURCES})
-endif ()
 
 # ------------------------------
 # Create Shared Library
 # ------------------------------
-add_library(${PROJECT_NAME} STATIC ${SOURCES})
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 
 # ------------------------------
-# Platform-Specific Linking
+# Linking Libraries
 # ------------------------------
-if (APPLE)
-    target_link_libraries(${PROJECT_NAME} PRIVATE objc "-framework AppKit -framework QuartzCore")
-elseif (WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32)
-else ()
-    target_link_libraries(${PROJECT_NAME} PRIVATE)
-endif ()
+target_link_libraries(${PROJECT_NAME} PRIVATE PAL::platform)
 
 # ------------------------------
 # Export Configuration (Header)
@@ -86,4 +68,4 @@ endif ()
 # ------------------------------
 # Create Platform Alias
 # ------------------------------
-add_library(PAL::platform ALIAS ${PROJECT_NAME})
+add_library(NAYLA::engine ALIAS ${PROJECT_NAME})

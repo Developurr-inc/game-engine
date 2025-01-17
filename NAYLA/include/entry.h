@@ -2,12 +2,11 @@
 // Created by Vinícius Ferreira Aguiar on 07/01/25.
 //
 
-#ifndef ENTRY_H
-# define ENTRY_H
+#ifndef NAYLA_ENTRY_H
+#define NAYLA_ENTRY_H
 
-#include "../src/defines.h"
-#include "core/application.h"
-#include "core/logger.h"
+#include <NAYLA/application.h>
+#include <NAYLA/logger.h>
 
 extern bool1 create_game(Game *out_game);
 
@@ -49,7 +48,9 @@ int main (const int argc, const char **argv) {
         return 2;
     }
 
+    n_application_destroy();
+
     return 0;
 }
 
-#endif //ENTRY_H
+#endif //NAYLA_ENTRY_H

@@ -3,15 +3,15 @@
 //
 
 #ifndef TYPES_H
-# define TYPES_H
+#define TYPES_H
 
-# include <stdint.h>
+#include <stdint.h>
 
-# if defined(__clang__) || defined(__GNUC__)
-#  define STATIC_ASSERT  _Static_assert
-# else
-#  define STATIC_ASSERT  static_assert
-# endif
+#if defined(__clang__) || defined(__GNUC__)
+    #define PAL_STATIC_ASSERT  _Static_assert
+#else
+    #define PAL_STATIC_ASSERT  static_assert
+#endif
 
 /** @brief 1-bit boolean type */
 typedef bool bool1;
@@ -62,48 +62,48 @@ typedef double float64;
 typedef long double float128;
 
 /** @brief Assert bool8 to be 1 byte.*/
-STATIC_ASSERT(sizeof(bool8) == 1, "Expected bool8 to be 1 byte.");
+PAL_STATIC_ASSERT(sizeof(bool8) == 1, "Expected bool8 to be 1 byte.");
 
 /** @brief Assert bool16 to be 2 bytes.*/
-STATIC_ASSERT(sizeof(bool16) == 2, "Expected bool16 to be 2 bytes.");
+PAL_STATIC_ASSERT(sizeof(bool16) == 2, "Expected bool16 to be 2 bytes.");
 
 /** @brief Assert bool32 to be 4 bytes.*/
-STATIC_ASSERT(sizeof(bool32) == 4, "Expected bool32 to be 4 bytes.");
+PAL_STATIC_ASSERT(sizeof(bool32) == 4, "Expected bool32 to be 4 bytes.");
 
 /** @brief Assert bool64 to be 8 bytes.*/
-STATIC_ASSERT(sizeof(bool64) == 8, "Expected bool64 to be 8 bytes.");
+PAL_STATIC_ASSERT(sizeof(bool64) == 8, "Expected bool64 to be 8 bytes.");
 
 /** @brief Assert uint8 to be 1 byte.*/
-STATIC_ASSERT(sizeof(uint8) == 1, "Expected u8 to be 1 byte.");
+PAL_STATIC_ASSERT(sizeof(uint8) == 1, "Expected u8 to be 1 byte.");
 
 /** @brief Assert uint16 to be 2 bytes.*/
-STATIC_ASSERT(sizeof(uint16) == 2, "Expected u16 to be 2 bytes.");
+PAL_STATIC_ASSERT(sizeof(uint16) == 2, "Expected u16 to be 2 bytes.");
 
 /** @brief Assert uint32 to be 4 bytes.*/
-STATIC_ASSERT(sizeof(uint32) == 4, "Expected u32 to be 4 bytes.");
+PAL_STATIC_ASSERT(sizeof(uint32) == 4, "Expected u32 to be 4 bytes.");
 
 /** @brief Assert uint64 to be 8 bytes.*/
-STATIC_ASSERT(sizeof(uint64) == 8, "Expected u64 to be 8 bytes.");
+PAL_STATIC_ASSERT(sizeof(uint64) == 8, "Expected u64 to be 8 bytes.");
 
 /** @brief Assert int8 to be 1 byte.*/
-STATIC_ASSERT(sizeof(int8) == 1, "Expected i8 to be 1 byte.");
+PAL_STATIC_ASSERT(sizeof(int8) == 1, "Expected i8 to be 1 byte.");
 
 /** @brief Assert int16 to be 2 bytes.*/
-STATIC_ASSERT(sizeof(int16) == 2, "Expected i16 to be 2 bytes.");
+PAL_STATIC_ASSERT(sizeof(int16) == 2, "Expected i16 to be 2 bytes.");
 
 /** @brief Assert int32 to be 4 bytes.*/
-STATIC_ASSERT(sizeof(int32) == 4, "Expected i32 to be 4 bytes.");
+PAL_STATIC_ASSERT(sizeof(int32) == 4, "Expected i32 to be 4 bytes.");
 
 /** @brief Assert int64 to be 8 bytes.*/
-STATIC_ASSERT(sizeof(int64) == 8, "Expected i64 to be 8 bytes.");
+PAL_STATIC_ASSERT(sizeof(int64) == 8, "Expected i64 to be 8 bytes.");
 
 /** @brief Assert float32 to be 4 bytes.*/
-STATIC_ASSERT(sizeof(float32) == 4, "Expected f32 to be 4 bytes.");
+PAL_STATIC_ASSERT(sizeof(float32) == 4, "Expected f32 to be 4 bytes.");
 
 /** @brief Assert float64 to be 8 bytes.*/
-STATIC_ASSERT(sizeof(float64) == 8, "Expected f64 to be 8 bytes.");
+PAL_STATIC_ASSERT(sizeof(float64) == 8, "Expected f64 to be 8 bytes.");
 
 /** @brief Assert float128 to be at least 8 bytes.*/
-STATIC_ASSERT(sizeof(float128) >= 8, "Expected f64 to be at least 8 bytes.");
+PAL_STATIC_ASSERT(sizeof(float128) >= 8, "Expected f64 to be at least 8 bytes.");
 
 #endif //TYPES_H

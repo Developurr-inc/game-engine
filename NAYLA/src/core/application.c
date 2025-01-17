@@ -2,12 +2,14 @@
 // Created by Vinícius Ferreira Aguiar on 07/01/25.
 //
 
-#include <core/application.h>
+#include <NAYLA/application.h>
+#include <NAYLA/logger.h>
+#include <NAYLA/types.h>
 
 #include <PAL/window.h>
 
-#include "../platform/platform.h"
-#include "core/logger.h"
+#include "_logger.h"
+#include "_memory.h"
 
 typedef struct ApplicationState {
     bool1 is_running;
@@ -33,8 +35,13 @@ bool1 n_application_create(Game *game_instance) {
         return false;
     }
 
+    if (! memory_create()) {
+        N_ERROR("n_application_create: Failed to create memory");
+        return false;
+    }
+
     if (! logger_create()) {
-        // N_ERROR("n_application_create: Failed to create logger");
+        N_ERROR("n_application_create: Failed to create logger");
         return false;
     }
 
@@ -68,6 +75,8 @@ bool1 n_application_create(Game *game_instance) {
 }
 
 bool1 n_application_run() {
+    N_INFO(n_memory_get_usage());
+
     while (g_appState.is_running) {
         if (! g_appState.window->pump_messages(g_appState.window)) {
             N_ERROR("n_application_run: Failed to pump messages");
@@ -91,10 +100,19 @@ bool1 n_application_run() {
 
     g_appState.is_running = false;
 
-    platform_window_destroy(g_appState.window);
-
     return true;
 }
 
 void n_application_destroy() {
+    if (! g_isInitialized) {
+        N_ERROR("n_application_destroy: Application not initialized");
+        return;
+    }
+
+    g_isInitialized = false;
+
+    platform_window_destroy(g_appState.window);
+
+    logger_destroy();
+    memory_destroy();
 }

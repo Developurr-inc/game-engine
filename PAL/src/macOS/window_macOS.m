@@ -2,19 +2,20 @@
 // Created by Vinícius Ferreira Aguiar on 08/01/25.
 //
 
+#include "../platform_detection.h"
+
+#ifdef PLATFORM_MACOS
 #include <PAL/window.h>
 #include <PAL/memory.h>
 
-#ifdef N_PLATFORM_APPLE
+#include <crt_externs.h>
+#include <copyfile.h>
+#include <errno.h>
 
-# include <crt_externs.h>
-# include <copyfile.h>
-# include <errno.h>
-
-# import <Cocoa/Cocoa.h>
-# import <Foundation/Foundation.h>
-# import <QuartzCore/CAMetalLayer.h>
-# import <QuartzCore/QuartzCore.h>
+#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
+#import <QuartzCore/CAMetalLayer.h>
+#import <QuartzCore/QuartzCore.h>
 
 static bool1 platform_window_pump_messages(Window *window);
 
@@ -61,17 +62,15 @@ Window *platform_window_create(
     const int32 width,
     const int32 height
 ) {
-    Memory *memory = platform_memory_create();
-
-    Window *window = memory->allocate(sizeof(Window), false);
+    Window *window = pal_memory_alloc(sizeof(Window), false);
     if (! window) {
         // N_FATAL("Failed to allocate memory for platform state");
         return nullptr;
     }
 
-    InternalState *internal_state = memory->allocate(sizeof(InternalState), false);
+    InternalState *internal_state = pal_memory_alloc(sizeof(InternalState), false);
     if (! internal_state) {
-        memory->free(window, false);
+        pal_memory_free(window, false);
         // N_FATAL("Failed to allocate memory for internal state");
         return nullptr;
     }
@@ -107,8 +106,6 @@ Window *platform_window_create(
     window->data = internal_state;
     window->pump_messages = platform_window_pump_messages;
 
-    platform_memory_destroy(memory);
-
     return window;
 }
 
@@ -129,14 +126,8 @@ void platform_window_destroy(Window *window) {
         [NSApp terminate:nil];
     }
 
-    Memory *memory = platform_memory_create();
-
-    memory->used = true;
-
-    memory->free(internal_state, false);
-    memory->free(window, false);
-
-    platform_memory_destroy(memory);
+    pal_memory_free(internal_state, false);
+    pal_memory_free(window, false);
 }
 
 static bool1 platform_window_pump_messages(Window *window) {

@@ -15,15 +15,6 @@ static void *platform_zero_memory(void *block, uint64 size);
 static void *platform_copy_memory(void *destination, const void *source, uint64 size);
 static void *platform_set_memory (void *destination, int32 value, uint64 size);
 
-typedef struct InternalState {
-    Display *display;
-    xcb_connection_t *connection;
-    xcb_screen_t *screen;
-    xcb_window_t window;
-    xcb_atom_t wm_protocols;
-    xcb_atom_t wm_delete_window;
-} InternalState;
-
 Memory *platform_memory_create() {
     Memory *memory = platform_allocate(sizeof(Memory), false);
 
